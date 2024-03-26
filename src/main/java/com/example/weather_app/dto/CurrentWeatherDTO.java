@@ -1,6 +1,7 @@
 package com.example.weather_app.dto;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class CurrentWeatherDTO {
     private double temperature;
@@ -11,6 +12,9 @@ public class CurrentWeatherDTO {
     private double humidity;
 
     private LocalDateTime date;
+
+    public CurrentWeatherDTO() {
+    }
 
     public CurrentWeatherDTO(double temperature, double feelsLikeTemperature, double humidity, LocalDateTime date) {
         this.temperature = temperature;
@@ -50,5 +54,10 @@ public class CurrentWeatherDTO {
 
     public void setHumidity(double humidity) {
         this.humidity = humidity;
+    }
+
+    public String getFormattedDateTime() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        return date.format(formatter);
     }
 }

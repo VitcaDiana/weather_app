@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ public class WeatherService {
 
     private ObjectMapper objectMapper;
 
+
     private static final String BASE_URL = "https://api.tomorrow.io/v4/weather";
 
 
@@ -38,59 +40,66 @@ public class WeatherService {
         this.objectMapper = mapper;
     }
 
-    public CurrentWeatherDTO getCurrentWeather (double lat, double lon) throws JsonProcessingException {
+    public CurrentWeatherDTO getCurrentWeather(double lat, double lon) throws JsonProcessingException {
         String url = UriComponentsBuilder
-                .fromUriString(BASE_URL+"/realtime")
-                .queryParam("location", lat+","+lon)
+                .fromUriString(BASE_URL + "/realtime")
+                .queryParam("location", lat + "," + lon)
                 .queryParam("apikey", apiKey)
                 .toUriString();
 
 
-        String response = restTemplate.getForObject(url,String.class);
+        String response = restTemplate.getForObject(url, String.class);
         JsonNode root = objectMapper.readTree(response);
         return mapFromJsonToCurrentWeatherDTO(root);
     }
 
-    public List<CurrentWeatherDTO> getForecastWeather (double lat, double lon, String timesteps) throws JsonProcessingException {
+    public List<CurrentWeatherDTO> getForecastWeather(double lat, double lon, String timesteps) throws JsonProcessingException {
         String url = UriComponentsBuilder
-                .fromUriString(BASE_URL+"/forecast")
-                .queryParam("location", lat+","+lon)
+                .fromUriString(BASE_URL + "/forecast")
+                .queryParam("location", lat + "," + lon)
                 .queryParam("timesteps", timesteps)
                 .queryParam("apikey", apiKey)
                 .queryParam("untis", "metric")
                 .toUriString();
 
 
-        String response = restTemplate.getForObject(url,String.class);
+        String response = restTemplate.getForObject(url, String.class);
         JsonNode root = objectMapper.readTree(response);
         return mapFromJsonToForecastWeather(root);
     }
 
-    public List<CurrentWeatherDTO> mapFromJsonToForecastWeather(JsonNode root){
+    public List<CurrentWeatherDTO> mapFromJsonToForecastWeather(JsonNode root) {
         ArrayNode dailyForecasts = (ArrayNode) root.path("timelines").path("daily");
-        List<CurrentWeatherDTO > result = new ArrayList<>();
-        for (JsonNode jsonNode: dailyForecasts){
+        List<CurrentWeatherDTO> result = new ArrayList<>();
+        for (JsonNode jsonNode : dailyForecasts) {
             result.add(mapFromFOrecastNodeToCurrentWreatherDTO(jsonNode));
         }
         return result;
     }
 
-    public CurrentWeatherDTO mapFromFOrecastNodeToCurrentWreatherDTO(JsonNode jsonNode){
+    public CurrentWeatherDTO mapFromFOrecastNodeToCurrentWreatherDTO(JsonNode jsonNode) {
         Double humidity = jsonNode.path("values").path("humidityAvg").asDouble();
         Double temperature = jsonNode.path("values").path("temperatureAvg").asDouble();
         Double feelsLikeTemperature = jsonNode.path("values").path("temperatureApparentAvg").asDouble();
         String dateString = jsonNode.path("time").asText();
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        LocalDateTime dateTime = LocalDateTime.parse(dateString, dtf);
+//        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+//        LocalDateTime dateTime = LocalDateTime.parse(dateString, dtf);
+        LocalDateTime dateTime = LocalDateTime.now();
+
         return new CurrentWeatherDTO(temperature, feelsLikeTemperature, humidity, dateTime);
     }
-    public CurrentWeatherDTO mapFromJsonToCurrentWeatherDTO (JsonNode root){
+
+    public CurrentWeatherDTO mapFromJsonToCurrentWeatherDTO(JsonNode root) {
         Double humidity = root.path("data").path("values").path("humidity").asDouble();
         Double temperature = root.path("data").path("values").path("temperature").asDouble();
         Double feelsLikeTemperature = root.path("data").path("values").path("temperatureApparent").asDouble();
-        String dateString = root.path("data").path("time").asText();
-        LocalDateTime dateTime = LocalDateTime.parse(dateString);
+
+        LocalDateTime dateTime = LocalDateTime.now();
+
+//        String dateString = root.path("data").path("time").asText();
+//        LocalDateTime dateTime = LocalDateTime.parse(dateString);
         return new CurrentWeatherDTO(temperature, feelsLikeTemperature, humidity, dateTime);
     }
+
 
 }
